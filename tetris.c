@@ -319,6 +319,7 @@ int check_piece_at_bottom(int *linha, int *coluna, PecaTetris peca, int *peca_at
                 if (board[*linha + i + 1][*coluna + j] == 2 || (*linha + i) >= 15) // Se houver uma peça fixa abaixo
                 {
                     fix_piece(linha, coluna, peca);
+                    remove_full_lines();
                     generate_next_piece(linha, coluna, peca_atual);
                     return 1;
                 }
@@ -348,6 +349,46 @@ void fix_piece(int *linha, int *coluna, PecaTetris peca)
             {
                 board[*linha + i][*coluna + j] = 2; // Marca a posição com 2, indicando que está fixa
             }
+        }
+    }
+}
+
+void remove_full_lines()
+{
+    for (int i = ROWS - 1; i >= 0; i--) // Começa da última linha e vai subindo
+    {
+        int complete = 1;
+        
+        // Verifica se a linha está completa
+        for (int j = 0; j < COLS; j++)
+        {
+            if (board[i][j] != 2) // Se qualquer célula não for preenchida
+            {
+                complete = 0;
+                break; // Se a linha não estiver completa, sai do loop
+            }
+        }
+
+        // Se a linha estiver completa, removemos a linha e deslocamos as linhas acima
+        if (complete)
+        {
+            // Desloca todas as linhas acima uma posição para baixo
+            for (int k = i; k > 0; k--)
+            {
+                for (int j = 0; j < COLS; j++)
+                {
+                    board[k][j] = board[k - 1][j];
+                }
+            }
+
+            // Limpa a primeira linha (agora vazia)
+            for (int j = 0; j < COLS; j++)
+            {
+                board[0][j] = 0;
+            }
+
+            // Como movemos as linhas para baixo, não precisamos verificar a linha removida novamente
+            i++; // Reanalisa a linha atual, pois ela pode ter se tornado completa após o deslocamento
         }
     }
 }

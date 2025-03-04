@@ -70,16 +70,16 @@ int main()
         {
             limpaTela();
             move_piece_down(&linha, &coluna, pecas[peca_atual]);
-            check_piece_at_bottom(&linha, &coluna, pecas[peca_atual], &peca_atual);
             draw_board();
         }
-
+        
         else if (tecla == 'q')
         {
             printf("\nSaindo do jogo...\n");
             break;
         }
-
+        
+        check_piece_at_bottom(&linha, &coluna, pecas[peca_atual], &peca_atual);
         
     }
 

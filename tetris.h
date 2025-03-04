@@ -27,6 +27,7 @@ int gerar_peca_aleatoria();
 int check_piece_at_bottom(int *linha, int *coluna, PecaTetris peca, int *peca_atual);
 void fix_piece(int *linha, int *coluna, PecaTetris peca);
 void generate_next_piece(int *linha, int *coluna, int *peca_atual);
+void remove_full_lines();
 
 // Funcao de movimento horizontal
 void move_piece_right(int *linha, int *coluna, PecaTetris peca);

@@ -281,3 +281,73 @@ void rotate_piece(int linha, int coluna, int new_matriz[4][4], PecaTetris *peca)
         place_piece(linha, coluna, *peca);
     }
 }
+
+void move_piece_down(int *linha, int *coluna, PecaTetris peca)
+{
+    int nova_linha = *linha + 1;
+
+    // Verifica se a peça pode se mover para baixo (se a linha não está fora do tabuleiro e não há outra peça no caminho)
+    if (can_move(nova_linha, *coluna, peca)) // A função can_move agora verifica se a nova posição é válida
+    {
+        // Apaga a peça da posição atual
+        remove_piece(*linha, *coluna, peca);
+
+        // Atualiza a posição da peça
+        *linha = nova_linha;
+
+        // Coloca a peça na nova posição
+        place_piece(*linha, *coluna, peca);
+    }
+}
+
+// Função para gerar uma peça aleatória
+int gerar_peca_aleatoria()
+{
+    return rand() % 7; // Gera um número entre 0 e 6
+}
+
+int check_piece_at_bottom(int *linha, int *coluna, PecaTetris peca, int *peca_atual)
+{
+
+    // Verifique se há outra peça abaixo dela (posição da peça no tabuleiro)
+    for (int i = 0; i < 4; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            if (peca.shape[i][j] == 1)
+            {
+                if (board[*linha + i + 1][*coluna + j] == 2 || (*linha + i) >= 15) // Se houver uma peça fixa abaixo
+                {
+                    fix_piece(linha, coluna, peca);
+                    generate_next_piece(linha, coluna, peca_atual);
+                    return 1;
+                }
+            }
+        }
+    }
+
+    return 0; // A peça não atingiu o fundo
+}
+
+void generate_next_piece(int *linha, int *coluna, int *peca_atual)
+{
+    *peca_atual = gerar_peca_aleatoria();
+    // Define a posição inicial da nova peça
+    *linha = 0;  // Começa do topo
+    *coluna = 3; // Começa no meio do tabuleiro
+}
+
+void fix_piece(int *linha, int *coluna, PecaTetris peca)
+{
+    // Adiciona a peça no tabuleiro, tornando-a fixa
+    for (int i = 0; i < 4; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            if (peca.shape[i][j] == 1)
+            {
+                board[*linha + i][*coluna + j] = 2; // Marca a posição com 2, indicando que está fixa
+            }
+        }
+    }
+}

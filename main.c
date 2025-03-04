@@ -31,13 +31,14 @@ void limpaTela()
 
 int main()
 {
-    int linha = 1, coluna = 0;
-#define PECA_DEFINIDA 4
+    int linha = 1, coluna = 0;                 // Posição inicial da peça
+    int peca_atual = gerar_peca_aleatoria();   // Gera a primeira peça aleatória
+
     init_game();
     draw_board();
 
     printf("\nPosicionando a peça inicial...\n");
-    place_piece(linha, coluna, pecas[PECA_DEFINIDA]);
+    place_piece(linha, coluna, pecas[peca_atual]);
     limpaTela();
     draw_board();
 
@@ -48,37 +49,39 @@ int main()
         if (tecla == 'h')
         {
             limpaTela();
-            move_piece_left(&linha, &coluna, pecas[PECA_DEFINIDA]);
+            move_piece_left(&linha, &coluna, pecas[peca_atual]);
             draw_board();
         }
         else if (tecla == 'l')
         {
             limpaTela();
-            move_piece_right(&linha, &coluna, pecas[PECA_DEFINIDA]);
+            move_piece_right(&linha, &coluna, pecas[peca_atual]);
             draw_board();
         }
 
         else if (tecla == 'k')
         {
             limpaTela();
-            rotate_piece_right(linha, coluna, &pecas[PECA_DEFINIDA]);
+            rotate_piece_right(linha, coluna, &pecas[peca_atual]);
             draw_board();
         }
 
         else if (tecla == 'j')
         {
             limpaTela();
-            rotate_piece_left(linha, coluna, &pecas[PECA_DEFINIDA]);
+            move_piece_down(&linha, &coluna, pecas[peca_atual]);
+            check_piece_at_bottom(&linha, &coluna, pecas[peca_atual], &peca_atual);
             draw_board();
         }
-
 
         else if (tecla == 'q')
         {
             printf("\nSaindo do jogo...\n");
             break;
         }
-        }
+
+        
+    }
 
     return 0;
 }

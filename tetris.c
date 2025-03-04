@@ -201,7 +201,7 @@ int can_move(int linha, int coluna, PecaTetris peca)
                     int board_coluna = coluna + j;
 
                     // Verifica se está dentro dos limites do tabuleiro
-                    if (board_linha < 0 || board_linha >= COLS || board_coluna < 0 || board_coluna >= ROWS)
+                    if (board_linha < 0 || board_linha >= ROWS || board_coluna < 0 || board_coluna >= COLS)
                     {
 #ifdef DEBUG
                         printf("\nMovimento Invalido\n");
@@ -235,7 +235,7 @@ int can_move(int linha, int coluna, PecaTetris peca)
                     int board_coluna = coluna + i;
 
                     // Verifica se está dentro dos limites do tabuleiro
-                    if (board_linha < 0 || board_linha >= COLS || board_coluna < 0 || board_coluna >= ROWS)
+                    if (board_linha < 0 || board_linha >= ROWS || board_coluna < 0 || board_coluna >= COLS)
                     {
 #ifdef DEBUG
                         printf("\nMovimento Invalido\n");

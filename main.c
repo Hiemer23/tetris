@@ -1,35 +1,70 @@
 #include "tetris.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <termios.h>
+#include <unistd.h>
+
+// Função para capturar entrada sem precisar pressionar Enter
+char get_key()
+{
+    struct termios oldt, newt;
+    char ch;
+    tcgetattr(STDIN_FILENO, &oldt);
+    newt = oldt;
+    newt.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+    ch = getchar();
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+    return ch;
+}
+
+// Função para limpar a tela no Windows ou Linux
+void limpaTela()
+{
+
+#ifdef _WIN32
+    system("cls"); // Windows
+#else
+    system("clear"); // Linux / Mac
+#endif
+}
 
 int main()
 {
     int linha = 1, coluna = 0; // Posição inicial da peça "T"
-    pecas[2].sentido = 1;
+#define PECA_DEFINIDA 4
+    pecas[PECA_DEFINIDA].sentido = 1;
     init_game();
     draw_board();
 
     printf("\nPosicionando a peça inicial...\n");
-    place_piece(linha, coluna, pecas[2]);
+    place_piece(linha, coluna, pecas[PECA_DEFINIDA]);
+    limpaTela();
     draw_board();
 
-    printf("\nMovendo para a direita...\n");
-    move_piece_right(&linha, &coluna, pecas[2]); // Move para direita
-    draw_board();
+    while (1)
+    {
+        char tecla = get_key();
 
-    printf("\nMovendo para a direita...\n");
-    move_piece_left(&linha, &coluna, pecas[2]); // Move para direita
-    draw_board();
-
-    printf("\nMovendo para a direita...\n");
-    move_piece_left(&linha, &coluna, pecas[2]); // Move para direita
-    draw_board();
-
-    printf("\nMovendo para a direita...\n");
-    move_piece_left(&linha, &coluna, pecas[2]); // Move para direita
-    draw_board();
-
-    printf("\nMovendo para a direita...\n");
-    move_piece_right(&linha, &coluna, pecas[2]); // Move para direita
-    draw_board();
+        if (tecla == 'h')
+        {
+            limpaTela();
+            move_piece_left(&linha, &coluna, pecas[PECA_DEFINIDA]);
+            draw_board();
+        }
+        else if (tecla == 'l')
+        {
+            limpaTela();
+            move_piece_right(&linha, &coluna, pecas[PECA_DEFINIDA]);
+            draw_board();
+        }
+        else if (tecla == 'q')
+        {
+            printf("\nSaindo do jogo...\n");
+            break;
+        }
+        
+    }
 
     return 0;
 }

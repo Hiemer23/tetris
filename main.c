@@ -31,9 +31,8 @@ void limpaTela()
 
 int main()
 {
-    int linha = 1, coluna = 0; // Posição inicial da peça "T"
+    int linha = 1, coluna = 0;
 #define PECA_DEFINIDA 4
-    pecas[PECA_DEFINIDA].sentido = 1;
     init_game();
     draw_board();
 
@@ -58,13 +57,28 @@ int main()
             move_piece_right(&linha, &coluna, pecas[PECA_DEFINIDA]);
             draw_board();
         }
+
+        else if (tecla == 'k')
+        {
+            limpaTela();
+            rotate_piece_right(linha, coluna, &pecas[PECA_DEFINIDA]);
+            draw_board();
+        }
+
+        else if (tecla == 'j')
+        {
+            limpaTela();
+            rotate_piece_left(linha, coluna, &pecas[PECA_DEFINIDA]);
+            draw_board();
+        }
+
+
         else if (tecla == 'q')
         {
             printf("\nSaindo do jogo...\n");
             break;
         }
-        
-    }
+        }
 
     return 0;
 }

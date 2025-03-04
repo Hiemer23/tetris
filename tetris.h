@@ -9,21 +9,27 @@
 
 typedef struct
 {
-
-    int shape[2][4]; // Representação da peça (2x4)
-    int sentido;     // horizontal = 0, vertical = 1
-
+    int shape[4][4]; // Matriz fixa 4x4 para todas as peças
 } PecaTetris;
 
 extern PecaTetris pecas[7];
 
-void init_game();
-void update_game();
-void draw_board();
+// Para testes
 void print_piece(PecaTetris peca);
-void place_piece(int linha, int coluna, PecaTetris peca);
-void move_piece_right(int *linha, int *coluna, PecaTetris peca);
-int can_move(int new_linha, int new_coluna, PecaTetris peca);
-void move_piece_left(int *linha, int *coluna, PecaTetris peca);
+void update_game();
 
+// Funcoes do jogo
+void init_game();
+void draw_board();
+void place_piece(int linha, int coluna, PecaTetris peca);
+
+// Funcao de movimento horizontal
+void move_piece_right(int *linha, int *coluna, PecaTetris peca);
+void move_piece_left(int *linha, int *coluna, PecaTetris peca);
+int can_move(int new_linha, int new_coluna, PecaTetris peca);
+
+// Funcao de rotacao
+void rotate_piece_right(int linha, int coluna, PecaTetris *peca);
+void rotate_piece_left(int linha, int coluna, PecaTetris *peca);
+void rotate_piece(int linha, int coluna, int new_matriz[4][4], PecaTetris *peca);
 #endif

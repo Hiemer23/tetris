@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <termios.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 // Função para capturar entrada sem precisar pressionar Enter
 char get_key()
@@ -18,6 +19,45 @@ char get_key()
     return ch;
 }
 
+/**
+ * @brief Verifica se uma tecla foi pressionada sem bloquear a execução.
+ *
+ * @return int Retorna 1 se uma tecla foi pressionada, ou 0 caso contrário.
+ */
+int kbhit(void)
+{
+    struct termios oldt, newt;
+    int ch;
+    int oldf;
+
+    // Salva as configurações atuais do terminal
+    tcgetattr(STDIN_FILENO, &oldt);
+    newt = oldt;
+    // Desativa modo canônico e o echo
+    newt.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+
+    // Define o STDIN como não bloqueante
+    oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
+    fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
+
+    // Tenta ler um caractere
+    ch = getchar();
+
+    // Restaura as configurações originais do terminal
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+    // Restaura o modo bloqueante
+    fcntl(STDIN_FILENO, F_SETFL, oldf);
+
+    if (ch != EOF)
+    {
+        ungetc(ch, stdin); // Devolve o caractere lido para o buffer
+        return 1;
+    }
+
+    return 0;
+}
+
 // Função para limpar a tela no Windows ou Linux
 void limpaTela()
 {
@@ -29,58 +69,75 @@ void limpaTela()
 #endif
 }
 
+void delay_1_ms()
+{
+    // Aguarda 1 milissegundo
+    usleep(1000);
+    limpaTela();
+}
+
 int main()
 {
-    int linha = 1, coluna = 0;                 // Posição inicial da peça
-    int peca_atual = gerar_peca_aleatoria();   // Gera a primeira peça aleatória
+    int linha = 0, coluna = 3;                // Posição inicial da peça
+    int peca_atual = number_aleatory_peace(); // Gera a primeira peça aleatória
 
     init_game();
     draw_board();
 
-    printf("\nPosicionando a peça inicial...\n");
     place_piece(linha, coluna, pecas[peca_atual]);
     limpaTela();
     draw_board();
 
     while (1)
     {
-        char tecla = get_key();
+        char tecla;
 
-        if (tecla == 'h')
+        if (game_over()) // Verifica se o jogo acabou
         {
-            limpaTela();
-            move_piece_left(&linha, &coluna, pecas[peca_atual]);
-            draw_board();
-        }
-        else if (tecla == 'l')
-        {
-            limpaTela();
-            move_piece_right(&linha, &coluna, pecas[peca_atual]);
-            draw_board();
-        }
-
-        else if (tecla == 'k')
-        {
-            limpaTela();
-            rotate_piece_right(linha, coluna, &pecas[peca_atual]);
-            draw_board();
-        }
-
-        else if (tecla == 'j')
-        {
-            limpaTela();
-            move_piece_down(&linha, &coluna, pecas[peca_atual]);
-            draw_board();
-        }
-        
-        else if (tecla == 'q')
-        {
-            printf("\nSaindo do jogo...\n");
+            printf("\nGame Over!\n");
             break;
         }
-        
-        check_piece_at_bottom(&linha, &coluna, pecas[peca_atual], &peca_atual);
-        
+
+        if (kbhit())
+        {
+            tecla = get_key();
+
+            if (tecla == 'h')
+            {
+                limpaTela();
+                move_piece_left(&linha, &coluna, pecas[peca_atual]);
+                draw_board();
+            }
+            else if (tecla == 'l')
+            {
+                limpaTela();
+                move_piece_right(&linha, &coluna, pecas[peca_atual]);
+                draw_board();
+            }
+
+            else if (tecla == 'k')
+            {
+                limpaTela();
+                rotate_piece_right(linha, coluna, &pecas[peca_atual]);
+                draw_board();
+            }
+
+            else if (tecla == 'j')
+            {
+                limpaTela();
+                move_piece_down(&linha, &coluna, pecas[peca_atual], &peca_atual);
+                draw_board();
+            }
+
+            else if (tecla == 'q')
+            {
+                printf("\nSaindo do jogo...\n");
+                break;
+            }
+        }
+        delay_1_ms();
+        update_game(&linha, &coluna, pecas[peca_atual], &peca_atual);
+        //check_piece_at_bottom(&linha, &coluna, pecas[peca_atual], &peca_atual);
     }
 
     return 0;

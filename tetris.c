@@ -1,5 +1,9 @@
 #include "tetris.h"
 
+// ----------------------------------------
+// VARIAVEIS UTILIZADAS NO JOGO
+// ----------------------------------------
+
 static int board[ROWS][COLS]; // x eh coluna(direita e esquerda), y eh linha(cima e baixo)
 
 PecaTetris pecas[7] = {
@@ -46,6 +50,29 @@ PecaTetris pecas[7] = {
          {0, 1, 1, 0},
          {0, 0, 0, 0}}}};
 
+#define TEMPO_BASE 500 // Tempo base em ms para o movimento para baixo
+
+static int multiplicador_tempo = 1;     // Multiplicador para acelerar o jogo
+static unsigned long timer_counter = 0; // Contador de milissegundos
+
+// ----------------------------------------
+// PROTIPOS PRIVADOS
+// ----------------------------------------
+
+void incrementTime();
+
+// ----------------------------------------
+// FUNCOES DO JOGO
+// ----------------------------------------
+
+/**
+ * @date        2025-03-08
+ * @author      Andrey Hiemer
+ * @brief       Inicializa o jogo Tetris, limpando o tabuleiro.
+ *
+ * Esta função preenche o tabuleiro com zeros, garantindo que todas as
+ * posições estejam vazias no início do jogo.
+ */
 void init_game()
 {
     printf("Iniciando Tetris...\n");
@@ -59,18 +86,27 @@ void init_game()
     }
 }
 
+/**
+ * @date        2025-03-08
+ * @author      Andrey Hiemer
+ * @brief       Exibe o tabuleiro do Tetris no console.
+ *
+ * Esta função imprime o estado atual do tabuleiro, representando os blocos
+ * ativos, espaços vazios e blocos fixos de maneira visual para o jogador.
+ */
+
 void draw_board()
 {
-    printf("Tabuleiro:\n    1 2 3 4 5 6 7 8\n");
+    printf("Tabuleiro:\n    0 1 2 3 4 5 6 7\n");
     for (int i = 0; i < ROWS; i++)
     {
-        if (i < 9)
+        if (i < 10)
         {
-            printf("%d - ", i + 1);
+            printf("%d - ", i);
         }
         else
         {
-            printf("%d -", i + 1);
+            printf("%d -", i);
         }
 
         for (int j = 0; j < COLS; j++)
@@ -92,18 +128,19 @@ void draw_board()
     }
 }
 
-void print_piece(PecaTetris peca) // Funcao de teste das pecas
-{
-    printf("Peça:\n");
-    for (int i = 0; i < 4; i++)
-    {
-        for (int j = 0; j < 4; j++)
-        {
-            printf("%d ", peca.shape[i][j]);
-        }
-        printf("\n");
-    }
-}
+/**
+ * @date        2025-03-08
+ * @author      Andrey Hiemer
+ * @brief       Posiciona a peça no tabuleiro.
+ *
+ * Esta função insere a peça na posição especificada no tabuleiro, garantindo
+ * que os blocos da peça sejam corretamente representados sem ultrapassar os
+ * limites do tabuleiro.
+ *
+ * @param linha   Posição inicial da peça no eixo vertical.
+ * @param coluna  Posição inicial da peça no eixo horizontal.
+ * @param peca    Estrutura contendo o formato da peça.
+ */
 
 void place_piece(int linha, int coluna, PecaTetris peca)
 {
@@ -127,6 +164,19 @@ void place_piece(int linha, int coluna, PecaTetris peca)
     }
 }
 
+/**
+ * @date        2025-03-08
+ * @author      Andrey Hiemer
+ * @brief       Remove a peça do tabuleiro.
+ *
+ * Esta função apaga a peça da posição especificada no tabuleiro,
+ * substituindo os blocos ocupados por espaços vazios.
+ *
+ * @param linha   Posição inicial da peça no eixo vertical.
+ * @param coluna  Posição inicial da peça no eixo horizontal.
+ * @param peca    Estrutura contendo o formato da peça.
+ */
+
 void remove_piece(int linha, int coluna, PecaTetris peca)
 {
     for (int i = 0; i < 4; i++)
@@ -147,6 +197,20 @@ void remove_piece(int linha, int coluna, PecaTetris peca)
         }
     }
 }
+
+/**
+ * @date        2025-03-08
+ * @author      Andrey Hiemer
+ * @brief       Verifica se a peça pode se mover para uma posição específica.
+ *
+ * Esta função verifica se a peça pode ser movida para a posição desejada
+ * no tabuleiro, considerando os limites do jogo e colisões com peças fixas.
+ *
+ * @param linha   Posição vertical para onde a peça será movida.
+ * @param coluna  Posição horizontal para onde a peça será movida.
+ * @param peca    Estrutura contendo o formato da peça.
+ * @return        1 se o movimento for válido, 0 caso contrário.
+ */
 
 int can_move(int linha, int coluna, PecaTetris peca)
 {
@@ -184,6 +248,20 @@ int can_move(int linha, int coluna, PecaTetris peca)
     return 1; // Movimento válido
 }
 
+/**
+ * @date        2025-03-08
+ * @author      Andrey Hiemer
+ * @brief       Move a peça uma posição para a direita, se possível.
+ *
+ * Esta função verifica se a peça pode ser movida para a direita.
+ * Se o movimento for válido, a peça é removida da posição atual
+ * e colocada na nova posição no tabuleiro.
+ *
+ * @param linha   Ponteiro para a posição vertical da peça.
+ * @param coluna  Ponteiro para a posição horizontal da peça.
+ * @param peca    Estrutura contendo o formato da peça.
+ */
+
 void move_piece_right(int *linha, int *coluna, PecaTetris peca)
 {
     int new_linha = *linha + 0;
@@ -202,6 +280,20 @@ void move_piece_right(int *linha, int *coluna, PecaTetris peca)
         place_piece(*linha, *coluna, peca);
     }
 }
+
+/**
+ * @date        2025-03-08
+ * @author      Andrey Hiemer
+ * @brief       Move a peça uma posição para a esquerda, se possível.
+ *
+ * Esta função verifica se a peça pode ser movida para a esquerda.
+ * Se o movimento for válido, a peça é removida da posição atual
+ * e colocada na nova posição no tabuleiro.
+ *
+ * @param linha   Ponteiro para a posição vertical da peça.
+ * @param coluna  Ponteiro para a posição horizontal da peça.
+ * @param peca    Estrutura contendo o formato da peça.
+ */
 
 void move_piece_left(int *linha, int *coluna, PecaTetris peca)
 {
@@ -222,6 +314,19 @@ void move_piece_left(int *linha, int *coluna, PecaTetris peca)
     }
 }
 
+/**
+ * @date        2025-03-08
+ * @author      Andrey Hiemer
+ * @brief       Rotaciona a peça 90 graus para a direita.
+ *
+ * Esta função cria uma matriz temporária para armazenar a peça rotacionada
+ * e chama a função de rotação principal para aplicar a nova orientação.
+ *
+ * @param linha   Posição vertical da peça no tabuleiro.
+ * @param coluna  Posição horizontal da peça no tabuleiro.
+ * @param peca    Ponteiro para a estrutura da peça a ser rotacionada.
+ */
+
 void rotate_piece_right(int linha, int coluna, PecaTetris *peca)
 {
     int nova_peca[4][4];
@@ -236,6 +341,19 @@ void rotate_piece_right(int linha, int coluna, PecaTetris *peca)
     rotate_piece(linha, coluna, nova_peca, peca);
 }
 
+/**
+ * @date        2025-03-08
+ * @author      Andrey Hiemer
+ * @brief       Rotaciona a peça 90 graus para a esquerda.
+ *
+ * Esta função cria uma matriz temporária para armazenar a peça rotacionada
+ * e chama a função de rotação principal para aplicar a nova orientação.
+ *
+ * @param linha   Posição vertical da peça no tabuleiro.
+ * @param coluna  Posição horizontal da peça no tabuleiro.
+ * @param peca    Ponteiro para a estrutura da peça a ser rotacionada.
+ */
+
 void rotate_piece_left(int linha, int coluna, PecaTetris *peca)
 {
     int nova_peca[4][4];
@@ -249,6 +367,21 @@ void rotate_piece_left(int linha, int coluna, PecaTetris *peca)
     }
     rotate_piece(linha, coluna, nova_peca, peca);
 }
+
+/**
+ * @date        2025-03-08
+ * @author      Andrey Hiemer
+ * @brief       Rotaciona a peça para uma nova orientação, se possível.
+ *
+ * Esta função cria uma cópia temporária da peça rotacionada, verifica se a nova
+ * posição da peça é válida, e se for, apaga a peça da posição atual, atualiza sua
+ * orientação e a coloca na nova posição no tabuleiro.
+ *
+ * @param linha      Posição vertical da peça no tabuleiro.
+ * @param coluna     Posição horizontal da peça no tabuleiro.
+ * @param new_matriz Matriz 4x4 representando a peça rotacionada.
+ * @param peca       Ponteiro para a estrutura da peça a ser rotacionada.
+ */
 
 void rotate_piece(int linha, int coluna, int new_matriz[4][4], PecaTetris *peca)
 {
@@ -282,7 +415,21 @@ void rotate_piece(int linha, int coluna, int new_matriz[4][4], PecaTetris *peca)
     }
 }
 
-void move_piece_down(int *linha, int *coluna, PecaTetris peca)
+/**
+ * @date        2025-03-08
+ * @author      Andrey Hiemer
+ * @brief       Move a peça para baixo no tabuleiro, se possível.
+ *
+ * Esta função verifica se a peça pode ser movida para baixo sem colidir com outras peças ou
+ * sair do tabuleiro. Se a movimentação for válida, a peça é removida da posição atual e
+ * colocada na nova posição.
+ *
+ * @param linha     Ponteiro para a posição vertical da peça no tabuleiro.
+ * @param coluna    Ponteiro para a posição horizontal da peça no tabuleiro.
+ * @param peca      Estrutura da peça a ser movida para baixo.
+ */
+
+int move_piece_down(int *linha, int *coluna, PecaTetris peca, int *peca_atual)
 {
     int nova_linha = *linha + 1;
 
@@ -297,16 +444,51 @@ void move_piece_down(int *linha, int *coluna, PecaTetris peca)
 
         // Coloca a peça na nova posição
         place_piece(*linha, *coluna, peca);
+        return 0;
+    }
+    else
+    {
+        fix_piece(linha, coluna, peca);
+        remove_full_lines();
+        generate_next_piece(linha, coluna, peca_atual);
+        return 1;
     }
 }
 
-// Função para gerar uma peça aleatória
-int gerar_peca_aleatoria()
+/**
+ * @date        2025-03-08
+ * @author      Andrey Hiemer
+ * @brief       Gera uma peça aleatória para o jogo Tetris.
+ *
+ * Esta função retorna um valor aleatório entre 0 e 6, representando uma das sete peças possíveis
+ * no Tetris. Cada número corresponde a um tipo de peça diferente.
+ *
+ * @return       Um número entre 0 e 6, representando o tipo da peça aleatória.
+ */
+
+int number_aleatory_peace()
 {
     return rand() % 7; // Gera um número entre 0 e 6
 }
 
-int check_piece_at_bottom(int *linha, int *coluna, PecaTetris peca, int *peca_atual)
+/**
+ * @date        2025-03-08
+ * @author      Andrey Hiemer
+ * @brief       Verifica se a peça atingiu o fundo ou colidiu com outra peça no Tetris.
+ *
+ * Esta função verifica se a peça atingiu o fundo do tabuleiro ou se há outra peça fixa abaixo dela.
+ * Se a peça atingiu o fundo, ela é fixada no tabuleiro, as linhas completas são removidas,
+ * e a próxima peça é gerada.
+ *
+ * @param linha      A linha da posição atual da peça no tabuleiro.
+ * @param coluna     A coluna da posição atual da peça no tabuleiro.
+ * @param peca       A peça que está sendo movida no jogo.
+ * @param peca_atual O tipo da próxima peça que será gerada.
+ *
+ * @return 1 se a peça atingiu o fundo ou colidiu com outra peça; 0 caso contrário.
+ */
+
+int check_piece_at_bottom(int *linha, int *coluna, PecaTetris peca)
 {
 
     // Verifique se há outra peça abaixo dela (posição da peça no tabuleiro)
@@ -318,9 +500,6 @@ int check_piece_at_bottom(int *linha, int *coluna, PecaTetris peca, int *peca_at
             {
                 if (board[*linha + i + 1][*coluna + j] == 2 || (*linha + i) >= 15) // Se houver uma peça fixa abaixo
                 {
-                    fix_piece(linha, coluna, peca);
-                    remove_full_lines();
-                    generate_next_piece(linha, coluna, peca_atual);
                     return 1;
                 }
             }
@@ -330,13 +509,40 @@ int check_piece_at_bottom(int *linha, int *coluna, PecaTetris peca, int *peca_at
     return 0; // A peça não atingiu o fundo
 }
 
+/**
+ * @date        2025-03-08
+ * @author      Andrey Hiemer
+ * @brief       Gera a próxima peça aleatória e define sua posição inicial no tabuleiro.
+ *
+ * Esta função gera uma peça aleatória para ser usada no jogo e define sua posição
+ * inicial no topo do tabuleiro, no meio (coluna 3).
+ *
+ * @param linha       A linha onde a próxima peça será colocada (inicialmente 0).
+ * @param coluna      A coluna onde a próxima peça será colocada (inicialmente 3).
+ * @param peca_atual  O índice da próxima peça aleatória gerada.
+ */
+
 void generate_next_piece(int *linha, int *coluna, int *peca_atual)
 {
-    *peca_atual = gerar_peca_aleatoria();
+    *peca_atual = number_aleatory_peace();
     // Define a posição inicial da nova peça
     *linha = 0;  // Começa do topo
     *coluna = 3; // Começa no meio do tabuleiro
 }
+
+/**
+ * @date        2025-03-08
+ * @author      Andrey Hiemer
+ * @brief       Fixa a peça no tabuleiro, tornando suas posições imutáveis.
+ *
+ * Esta função percorre a matriz da peça e marca as posições correspondentes no
+ * tabuleiro com o valor 2, indicando que essas posições estão agora ocupadas
+ * de forma permanente (fixas).
+ *
+ * @param linha  A linha onde a peça está atualmente posicionada no tabuleiro.
+ * @param coluna A coluna onde a peça está atualmente posicionada no tabuleiro.
+ * @param peca   A peça que deve ser fixada no tabuleiro.
+ */
 
 void fix_piece(int *linha, int *coluna, PecaTetris peca)
 {
@@ -353,12 +559,22 @@ void fix_piece(int *linha, int *coluna, PecaTetris peca)
     }
 }
 
+/**
+ * @date        2025-03-08
+ * @author      Andrey Hiemer
+ * @brief       Remove as linhas completas do tabuleiro e desloca as linhas acima.
+ *
+ * Esta função percorre o tabuleiro de baixo para cima, verifica se alguma linha
+ * está completamente preenchida e, se estiver, a remove. As linhas acima da
+ * linha removida são deslocadas para baixo, e a linha superior é limpa.
+ */
+
 void remove_full_lines()
 {
     for (int i = ROWS - 1; i >= 0; i--) // Começa da última linha e vai subindo
     {
         int complete = 1;
-        
+
         // Verifica se a linha está completa
         for (int j = 0; j < COLS; j++)
         {
@@ -391,4 +607,69 @@ void remove_full_lines()
             i++; // Reanalisa a linha atual, pois ela pode ter se tornado completa após o deslocamento
         }
     }
+}
+
+/**
+ * @brief Atualiza a gravidade do jogo verificando se o tempo acumulado já atingiu o limiar.
+ *
+ * A função incrementa um contador de milissegundos e, quando o valor acumulado ultrapassa
+ * o tempo definido (TEMPO_BASE / multiplicador_tempo), move a peça para baixo e reinicia o contador.
+ *
+ * @param linha Ponteiro para a posição vertical da peça.
+ * @param coluna Ponteiro para a posição horizontal da peça.
+ * @param peca A peça atual.
+ */
+void update_game(int *linha, int *coluna, PecaTetris peca, int *peca_atual)
+{
+
+    incrementTime();
+
+    // Se o tempo acumulado atingir o limiar, move a peça para baixo
+    if (timer_counter >= TEMPO_BASE / multiplicador_tempo)
+    {
+
+        if (check_piece_at_bottom(linha, coluna, peca) == 1)
+        {
+            fix_piece(linha, coluna, peca);
+            remove_full_lines();
+            generate_next_piece(linha, coluna, peca_atual);
+        }
+        else
+        {
+            move_piece_down(linha, coluna, peca, peca_atual);
+        }
+
+        timer_counter = 0; // Reinicia o contador
+    }
+
+    draw_board();
+}
+
+void incrementTime()
+{
+    // Chamada de 1 ms aqui
+    timer_counter++;
+}
+
+/**
+ * @date        2025-03-08
+ * @author      Andrey Hiemer
+ * @brief       Verifica se o jogo acabou.
+ *
+ * A função percorre a linha superior do tabuleiro (linha 0) e verifica se há qualquer
+ * célula ocupada (valor 2). Se encontrar, significa que não há espaço para uma nova peça,
+ * e o jogo deve terminar.
+ *
+ * @return      Retorna 1 se o jogo acabou (fim de jogo), ou 0 caso contrário.
+ */
+int game_over()
+{
+    for (int j = 0; j < COLS; j++)
+    {
+        if (board[0][j] == 2)
+        {
+            return 1;
+        }
+    }
+    return 0;
 }

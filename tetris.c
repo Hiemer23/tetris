@@ -54,24 +54,33 @@ PecaTetris pecas[7] = {
 
 static int multiplicador_tempo = 1;     // Multiplicador para acelerar o jogo
 static unsigned long timer_counter = 0; // Contador de milissegundos
+static int pontuacao = 0;
+static int nivel = 0;
+static int linhas_totais = 0;
+static int next_number; // Índice da próxima peça
+static PecaTetris next_peace;
+
+#define LINHAS_POR_NIVEL 10
 
 // ----------------------------------------
 // PROTIPOS PRIVADOS
 // ----------------------------------------
 
 void incrementTime();
+void atualizar_pontuacao(int linhas_removidas);
+void show_next_peace();
 
 // ----------------------------------------
 // FUNCOES DO JOGO
 // ----------------------------------------
 
 /**
- * @date        2025-03-08
- * @author      Andrey Hiemer
- * @brief       Inicializa o jogo Tetris, limpando o tabuleiro.
- *
+ * @date 2025-03-09
+ * @author Andrey Hiemer
+ * @brief Inicializa o jogo Tetris, limpando o tabuleiro.
  * Esta função preenche o tabuleiro com zeros, garantindo que todas as
- * posições estejam vazias no início do jogo.
+ * posições estejam vazias no início do jogo. Também inicializa a próxima peça
+ * a partir de um número aleatório.
  */
 void init_game()
 {
@@ -84,6 +93,8 @@ void init_game()
             board[i][j] = 0;
         }
     }
+    next_number = number_aleatory_peace();
+    next_peace = pecas[next_number];
 }
 
 /**
@@ -93,11 +104,12 @@ void init_game()
  *
  * Esta função imprime o estado atual do tabuleiro, representando os blocos
  * ativos, espaços vazios e blocos fixos de maneira visual para o jogador.
+ * Também exibe a próxima peça a ser enviada.
  */
 
 void draw_board()
 {
-    printf("Tabuleiro:\n    0 1 2 3 4 5 6 7\n");
+    printf("Tabuleiro:\n    0 1 2 3 4 5 6 7   Pontuacao: %d \n", pontuacao);
     for (int i = 0; i < ROWS; i++)
     {
         if (i < 10)
@@ -126,10 +138,11 @@ void draw_board()
         }
         printf("\n");
     }
+    show_next_peace();
 }
 
 /**
- * @date        2025-03-08
+ * @date        2025-03-09
  * @author      Andrey Hiemer
  * @brief       Posiciona a peça no tabuleiro.
  *
@@ -165,7 +178,7 @@ void place_piece(int linha, int coluna, PecaTetris peca)
 }
 
 /**
- * @date        2025-03-08
+ * @date        2025-03-09
  * @author      Andrey Hiemer
  * @brief       Remove a peça do tabuleiro.
  *
@@ -199,7 +212,7 @@ void remove_piece(int linha, int coluna, PecaTetris peca)
 }
 
 /**
- * @date        2025-03-08
+ * @date        2025-03-09
  * @author      Andrey Hiemer
  * @brief       Verifica se a peça pode se mover para uma posição específica.
  *
@@ -249,7 +262,7 @@ int can_move(int linha, int coluna, PecaTetris peca)
 }
 
 /**
- * @date        2025-03-08
+ * @date        2025-03-09
  * @author      Andrey Hiemer
  * @brief       Move a peça uma posição para a direita, se possível.
  *
@@ -282,7 +295,7 @@ void move_piece_right(int *linha, int *coluna, PecaTetris peca)
 }
 
 /**
- * @date        2025-03-08
+ * @date        2025-03-09
  * @author      Andrey Hiemer
  * @brief       Move a peça uma posição para a esquerda, se possível.
  *
@@ -416,41 +429,43 @@ void rotate_piece(int linha, int coluna, int new_matriz[4][4], PecaTetris *peca)
 }
 
 /**
- * @date        2025-03-08
+ * @date        2025-03-09
  * @author      Andrey Hiemer
  * @brief       Move a peça para baixo no tabuleiro, se possível.
  *
- * Esta função verifica se a peça pode ser movida para baixo sem colidir com outras peças ou
- * sair do tabuleiro. Se a movimentação for válida, a peça é removida da posição atual e
- * colocada na nova posição.
+ * Esta função verifica se a peça pode ser movida para baixo. Se for possível,
+ * ela é removida da posição atual e colocada na nova posição. Caso contrário,
+ * a peça é fixada no tabuleiro, as linhas completas são removidas e uma nova
+ * peça é gerada para continuar o jogo.
  *
- * @param linha     Ponteiro para a posição vertical da peça no tabuleiro.
- * @param coluna    Ponteiro para a posição horizontal da peça no tabuleiro.
- * @param peca      Estrutura da peça a ser movida para baixo.
+ * @param linha       Ponteiro para a posição vertical da peça no tabuleiro.
+ * @param coluna      Ponteiro para a posição horizontal da peça no tabuleiro.
+ * @param peca        Ponteiro para a estrutura da peça que está em jogo.
+ * @param peca_atual  Ponteiro para o índice da peça atual.
+ * @return            Retorna 0 se a peça continuar descendo e 1 se ela foi fixada.
  */
-
-int move_piece_down(int *linha, int *coluna, PecaTetris peca, int *peca_atual)
+int move_piece_down(int *linha, int *coluna, PecaTetris *peca, int *peca_atual)
 {
     int nova_linha = *linha + 1;
 
     // Verifica se a peça pode se mover para baixo (se a linha não está fora do tabuleiro e não há outra peça no caminho)
-    if (can_move(nova_linha, *coluna, peca)) // A função can_move agora verifica se a nova posição é válida
+    if (can_move(nova_linha, *coluna, *peca)) // A função can_move agora verifica se a nova posição é válida
     {
         // Apaga a peça da posição atual
-        remove_piece(*linha, *coluna, peca);
+        remove_piece(*linha, *coluna, *peca);
 
         // Atualiza a posição da peça
         *linha = nova_linha;
 
         // Coloca a peça na nova posição
-        place_piece(*linha, *coluna, peca);
+        place_piece(*linha, *coluna, *peca);
         return 0;
     }
     else
     {
-        fix_piece(linha, coluna, peca);
+        fix_piece(linha, coluna, *peca);
         remove_full_lines();
-        generate_next_piece(linha, coluna, peca_atual);
+        generate_next_piece(linha, coluna, peca, peca_atual);
         return 1;
     }
 }
@@ -472,18 +487,16 @@ int number_aleatory_peace()
 }
 
 /**
- * @date        2025-03-08
+ * @date        2025-03-09
  * @author      Andrey Hiemer
  * @brief       Verifica se a peça atingiu o fundo ou colidiu com outra peça no Tetris.
  *
  * Esta função verifica se a peça atingiu o fundo do tabuleiro ou se há outra peça fixa abaixo dela.
- * Se a peça atingiu o fundo, ela é fixada no tabuleiro, as linhas completas são removidas,
- * e a próxima peça é gerada.
+ * Caso a peça não possa mais descer, a função retorna 1, indicando que ela deve ser fixada.
  *
- * @param linha      A linha da posição atual da peça no tabuleiro.
- * @param coluna     A coluna da posição atual da peça no tabuleiro.
- * @param peca       A peça que está sendo movida no jogo.
- * @param peca_atual O tipo da próxima peça que será gerada.
+ * @param linha   Ponteiro para a posição vertical da peça no tabuleiro.
+ * @param coluna  Ponteiro para a posição horizontal da peça no tabuleiro.
+ * @param peca    Estrutura contendo o formato da peça.
  *
  * @return 1 se a peça atingiu o fundo ou colidiu com outra peça; 0 caso contrário.
  */
@@ -510,21 +523,27 @@ int check_piece_at_bottom(int *linha, int *coluna, PecaTetris peca)
 }
 
 /**
- * @date        2025-03-08
+ * @date        2025-03-09
  * @author      Andrey Hiemer
  * @brief       Gera a próxima peça aleatória e define sua posição inicial no tabuleiro.
  *
- * Esta função gera uma peça aleatória para ser usada no jogo e define sua posição
- * inicial no topo do tabuleiro, no meio (coluna 3).
+ * Esta função atribui a próxima peça previamente gerada ao jogo, atualiza a próxima peça
+ * para uma nova aleatória e define a posição inicial da peça recém-gerada.
  *
- * @param linha       A linha onde a próxima peça será colocada (inicialmente 0).
- * @param coluna      A coluna onde a próxima peça será colocada (inicialmente 3).
- * @param peca_atual  O índice da próxima peça aleatória gerada.
+ * @param linha       Ponteiro para a posição vertical inicial da peça (inicialmente 0).
+ * @param coluna      Ponteiro para a posição horizontal inicial da peça (inicialmente 3).
+ * @param peca        Ponteiro para a estrutura da peça que será colocada no tabuleiro.
+ * @param peca_atual  Ponteiro para armazenar o índice da peça atual.
  */
 
-void generate_next_piece(int *linha, int *coluna, int *peca_atual)
+void generate_next_piece(int *linha, int *coluna, PecaTetris *peca, int *peca_atual)
 {
-    *peca_atual = number_aleatory_peace();
+    *peca_atual = next_number;
+    *peca = pecas[*peca_atual];
+
+    next_number = number_aleatory_peace();
+    next_peace = pecas[next_number];
+
     // Define a posição inicial da nova peça
     *linha = 0;  // Começa do topo
     *coluna = 3; // Começa no meio do tabuleiro
@@ -560,17 +579,21 @@ void fix_piece(int *linha, int *coluna, PecaTetris peca)
 }
 
 /**
- * @date        2025-03-08
+ * @date        2025-03-09
  * @author      Andrey Hiemer
  * @brief       Remove as linhas completas do tabuleiro e desloca as linhas acima.
  *
- * Esta função percorre o tabuleiro de baixo para cima, verifica se alguma linha
- * está completamente preenchida e, se estiver, a remove. As linhas acima da
- * linha removida são deslocadas para baixo, e a linha superior é limpa.
+ * Esta função percorre o tabuleiro de baixo para cima, verificando se alguma linha
+ * está completamente preenchida. Se estiver, a linha é removida e todas as linhas
+ * acima dela são deslocadas para baixo. A primeira linha do tabuleiro é então limpa.
+ * Caso uma ou mais linhas sejam removidas, a pontuação e o nível do jogador são atualizados.
  */
 
 void remove_full_lines()
 {
+
+    int linhas_removidas = 0;
+
     for (int i = ROWS - 1; i >= 0; i--) // Começa da última linha e vai subindo
     {
         int complete = 1;
@@ -588,6 +611,9 @@ void remove_full_lines()
         // Se a linha estiver completa, removemos a linha e deslocamos as linhas acima
         if (complete)
         {
+
+            linhas_removidas++;
+
             // Desloca todas as linhas acima uma posição para baixo
             for (int k = i; k > 0; k--)
             {
@@ -607,19 +633,30 @@ void remove_full_lines()
             i++; // Reanalisa a linha atual, pois ela pode ter se tornado completa após o deslocamento
         }
     }
+    if (linhas_removidas > 0)
+    {
+        atualizar_pontuacao(linhas_removidas);
+
+#ifdef DEBUG
+        printf("Pontuação: %d   Nível: %d\n", pontuacao, nivel);
+#endif
+    }
 }
 
 /**
- * @brief Atualiza a gravidade do jogo verificando se o tempo acumulado já atingiu o limiar.
+ * @brief Atualiza a gravidade do jogo verificando se o tempo acumulado já atingiu o limite.
  *
- * A função incrementa um contador de milissegundos e, quando o valor acumulado ultrapassa
- * o tempo definido (TEMPO_BASE / multiplicador_tempo), move a peça para baixo e reinicia o contador.
+ * Esta função incrementa um contador de tempo em milissegundos. Quando o tempo acumulado
+ * ultrapassa o intervalo definido (TEMPO_BASE / multiplicador_tempo), a peça é movida para baixo.
+ * Se a peça não puder mais descer, ela é fixada no tabuleiro, linhas completas são removidas,
+ * e uma nova peça é gerada. O contador de tempo é então reiniciado.
  *
- * @param linha Ponteiro para a posição vertical da peça.
- * @param coluna Ponteiro para a posição horizontal da peça.
- * @param peca A peça atual.
+ * @param linha      Ponteiro para a posição vertical da peça no tabuleiro.
+ * @param coluna     Ponteiro para a posição horizontal da peça no tabuleiro.
+ * @param peca       Ponteiro para a estrutura da peça atual.
+ * @param peca_atual Ponteiro para o índice da peça atual.
  */
-void update_game(int *linha, int *coluna, PecaTetris peca, int *peca_atual)
+void update_game(int *linha, int *coluna, PecaTetris *peca, int *peca_atual)
 {
 
     incrementTime();
@@ -628,11 +665,11 @@ void update_game(int *linha, int *coluna, PecaTetris peca, int *peca_atual)
     if (timer_counter >= TEMPO_BASE / multiplicador_tempo)
     {
 
-        if (check_piece_at_bottom(linha, coluna, peca) == 1)
+        if (check_piece_at_bottom(linha, coluna, *peca) == 1)
         {
-            fix_piece(linha, coluna, peca);
+            fix_piece(linha, coluna, *peca);
             remove_full_lines();
-            generate_next_piece(linha, coluna, peca_atual);
+            generate_next_piece(linha, coluna, peca, peca_atual);
         }
         else
         {
@@ -645,6 +682,12 @@ void update_game(int *linha, int *coluna, PecaTetris peca, int *peca_atual)
     draw_board();
 }
 
+/**
+ * @brief Incrementa o contador de tempo do jogo.
+ *
+ * Esta função é chamada a cada milissegundo para atualizar o contador
+ * responsável por controlar a gravidade do jogo.
+ */
 void incrementTime()
 {
     // Chamada de 1 ms aqui
@@ -672,4 +715,77 @@ int game_over()
         }
     }
     return 0;
+}
+
+/**
+ * @brief Atualiza a pontuação com base no número de linhas removidas simultaneamente.
+ *
+ * Utiliza a fórmula tradicional:
+ *   - 1 linha: 40 * (nivel+1)
+ *   - 2 linhas: 100 * (nivel+1)
+ *   - 3 linhas: 300 * (nivel+1)
+ *   - 4 linhas: 1200 * (nivel+1)
+ *
+ * @param linhas_removidas Número de linhas removidas de uma vez.
+ */
+void atualizar_pontuacao(int linhas_removidas)
+{
+    int pontos = 0;
+    switch (linhas_removidas)
+    {
+    case 1:
+        pontos = 40 * (nivel + 1);
+        break;
+    case 2:
+        pontos = 100 * (nivel + 1);
+        break;
+    case 3:
+        pontos = 300 * (nivel + 1);
+        break;
+    case 4:
+        pontos = 1200 * (nivel + 1);
+        break;
+    default:
+        break;
+    }
+    pontuacao += pontos;
+    linhas_totais += linhas_removidas;
+
+    // Atualiza o nível se atingir o limite
+    if (linhas_totais >= LINHAS_POR_NIVEL)
+    {
+        nivel++;
+        linhas_totais = linhas_totais - LINHAS_POR_NIVEL; // Ou zere e acumule com pontos extras se desejar
+        // Ajuste a velocidade do jogo, por exemplo:
+        multiplicador_tempo++; // Ou reduza o tempo base
+        printf("\nNível aumentado! Agora é o nível %d\n", nivel);
+    }
+}
+
+/**
+ * @brief Exibe a próxima peça que aparecerá no jogo.
+ *
+ * Esta função imprime no console a matriz 4x4 da próxima peça
+ * que será utilizada no jogo. A peça é representada com '█'
+ * para blocos preenchidos e '.' para espaços vazios.
+ */
+void show_next_peace()
+{
+    printf("Proxima peca a aparecer\n");
+    for (int i = 0; i < 4; i++) // responsavel pela peca sentido linha
+    {
+        for (int j = 0; j < 4; j++) // responsavel pela peca sentido coluna
+        {
+            if (next_peace.shape[i][j] == 1)
+            {
+
+                printf("█ "); // Bloco preenchido
+            }
+            else if (board[i][j] == 0)
+            {
+                printf(". "); // Espaço vazio
+            }
+        }
+        printf("\n");
+    }
 }

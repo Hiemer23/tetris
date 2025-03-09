@@ -80,11 +80,12 @@ int main()
 {
     int linha = 0, coluna = 3;                // Posição inicial da peça
     int peca_atual = number_aleatory_peace(); // Gera a primeira peça aleatória
+    PecaTetris peca = pecas[peca_atual];
 
     init_game();
     draw_board();
 
-    place_piece(linha, coluna, pecas[peca_atual]);
+    place_piece(linha, coluna, peca);
     limpaTela();
     draw_board();
 
@@ -105,27 +106,27 @@ int main()
             if (tecla == 'h')
             {
                 limpaTela();
-                move_piece_left(&linha, &coluna, pecas[peca_atual]);
+                move_piece_left(&linha, &coluna, peca);
                 draw_board();
             }
             else if (tecla == 'l')
             {
                 limpaTela();
-                move_piece_right(&linha, &coluna, pecas[peca_atual]);
+                move_piece_right(&linha, &coluna, peca);
                 draw_board();
             }
 
             else if (tecla == 'k')
             {
                 limpaTela();
-                rotate_piece_right(linha, coluna, &pecas[peca_atual]);
+                rotate_piece_right(linha, coluna, &peca);
                 draw_board();
             }
 
             else if (tecla == 'j')
             {
                 limpaTela();
-                move_piece_down(&linha, &coluna, pecas[peca_atual], &peca_atual);
+                move_piece_down(&linha, &coluna, &peca, &peca_atual);
                 draw_board();
             }
 
@@ -136,8 +137,8 @@ int main()
             }
         }
         delay_1_ms();
-        update_game(&linha, &coluna, pecas[peca_atual], &peca_atual);
-        //check_piece_at_bottom(&linha, &coluna, pecas[peca_atual], &peca_atual);
+        update_game(&linha, &coluna, &peca, &peca_atual);
+        //check_piece_at_bottom(&linha, &coluna, peca, &peca_atual);
     }
 
     return 0;
